@@ -7,9 +7,9 @@ import (
 	"videochat-project/internal/handlers"
 	w "videochat-project/pkg/webrtc"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/corsg"
-	"github.com/gofiber/fiber/v2/logger"
-	"github.com/gofiber/template/html"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/template/html/v2"
 	"github.com/gofiber/websocket/v2"
 )
 
@@ -19,17 +19,17 @@ var (
 	key = flag.String("key","","") 
 )
 
-engine := html.New("./view",".html")
-app := fiber.New(fiber.Config{views: engine})
-app.use(logger.New())
-app.use(cors.New())
-
 func Run() error {
 	flag.Parse()
 
 	if *addr == ":"{
 		*addr =":3000"
 	}
+
+	engine := html.New("./view",".html")
+	app := fiber.New(fiber.Config{views: engine})
+	app.Use(logger.New())
+	app.Use(cors.New())
 
 	app.Get("/", handlers.Welcome)
 	app.Get("/room/create",handlers.RoomCreate)
@@ -40,7 +40,7 @@ func Run() error {
 	app.Get("/room/:uuid/viewer/websocket", websocket.New(handlers.RoomViewerWebsocket)) //semi colon
 	app.Get("/stream/:ssuid", handlers.stream)
 	app.Get("/stream/:ssuid/websocket", websocket.New(handlers.StreamWebsocket, websocket.Config{HandshakeTimeout: 10*time.Second,}))
-	app.Get("/stream/ssuid/chat/websocket", websocket.New(handlers.streamChatWebsocket)) //no colon
+	app.Get("/stream/:ssuid/chat/websocket", websocket.New(handlers.streamChatWebsocket)) //no colon
 	app.Get("/stream/:ssuid/viewer/websocket", websocket.New(handlers.StreamViewerWebsocket))
 	app.Static("/",".assets")
 
